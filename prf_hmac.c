@@ -14,15 +14,13 @@ void hmac_sha1(unsigned char *key, int key_len, unsigned char *text, int text_le
     unsigned char k_opad[64];
     unsigned char tk[20];
 
-    SHA_CTX tctx;
-    SHA_CTX context;
+    SHA_CTX ctx;
 
     if (key_len > 64)
     {
-        SHA1_Init(&tctx);
-        SHA1_Update(&tctx, key, key_len);
-        SHA1_Final(tk, &tctx);
+        SHA1(key, key_len, tk);
 
+        SHA1(key, key_len, tk);
         key = tk;
         key_len = 20;
     }
@@ -38,15 +36,15 @@ void hmac_sha1(unsigned char *key, int key_len, unsigned char *text, int text_le
         k_opad[i] ^= 0x5c;
     }
 
-    SHA1_Init(&context);
-    SHA1_Update(&context, k_ipad, 64);
-    SHA1_Update(&context, text, text_len); 
-    SHA1_Final(digest, &context);         
+    SHA1_Init(&ctx);
+    SHA1_Update(&ctx, k_ipad, 64);
+    SHA1_Update(&ctx, text, text_len); 
+    SHA1_Final(digest, &ctx);         
 
-    SHA1_Init(&context);
-    SHA1_Update(&context, k_opad, 64);
-    SHA1_Update(&context, digest, 20);
-    SHA1_Final(digest, &context);
+    SHA1_Init(&ctx);
+    SHA1_Update(&ctx, k_opad, 64);
+    SHA1_Update(&ctx, digest, 20);
+    SHA1_Final(digest, &ctx);
 }
 
 void hmac_md5(unsigned char *key, int key_len, unsigned char *text, int text_len, unsigned char *digest)
@@ -56,14 +54,11 @@ void hmac_md5(unsigned char *key, int key_len, unsigned char *text, int text_len
     unsigned char k_opad[64];
     unsigned char tk[16];
 
-    MD5_CTX tctx;
-    MD5_CTX context;
+    MD5_CTX ctx;
 
     if (key_len > 64)
     {
-        MD5_Init(&tctx);
-        MD5_Update(&tctx, key, key_len);
-        MD5_Final(tk, &tctx);
+        MD5(key, key_len, tk);
 
         key = tk;
         key_len = 16;
@@ -80,15 +75,15 @@ void hmac_md5(unsigned char *key, int key_len, unsigned char *text, int text_len
         k_opad[i] ^= 0x5c;
     }
 
-    MD5_Init(&context);
-    MD5_Update(&context, k_ipad, 64);
-    MD5_Update(&context, text, text_len); 
-    MD5_Final(digest, &context);         
+    MD5_Init(&ctx);
+    MD5_Update(&ctx, k_ipad, 64);
+    MD5_Update(&ctx, text, text_len); 
+    MD5_Final(digest, &ctx);         
 
-    MD5_Init(&context);
-    MD5_Update(&context, k_opad, 64);
-    MD5_Update(&context, digest, 16);
-    MD5_Final(digest, &context);
+    MD5_Init(&ctx);
+    MD5_Update(&ctx, k_opad, 64);
+    MD5_Update(&ctx, digest, 16);
+    MD5_Final(digest, &ctx);
 }
 
 int p_sha1(unsigned char *secret, int secret_len, unsigned char *seed, int seed_len, unsigned char *out, unsigned int outlen)
@@ -171,7 +166,6 @@ int tls_prf(unsigned char *secret, int secret_len, unsigned char *label, int lab
     if(!out_sha1)
         goto EndP;
     memset(out_sha1, 0, outlen);
-
     out_md5 = (unsigned char*)malloc(outlen);
     if(!out_md5)
         goto EndP;
@@ -184,7 +178,6 @@ int tls_prf(unsigned char *secret, int secret_len, unsigned char *label, int lab
 
     memcpy(label_seed, label, label_len);
     memcpy(label_seed+label_len, seed, seed_len);
-
     ret = p_sha1(secret, (secret_len+1)/2, label_seed, label_len+seed_len, out_sha1, outlen);
     if(ret == -1)
         goto EndP;
